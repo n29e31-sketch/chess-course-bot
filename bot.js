@@ -4,18 +4,26 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
+import http from 'node:http';
 
 const execAsync = promisify(exec);
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const TOKEN = process.env.BOT_TOKEN;  // ← Pon tu token aquí
+const TOKEN = process.env.BOT_TOKEN;
 const bot = new TelegramBot(TOKEN, { polling: true });
 
 const TEMP_DIR = path.join(__dirname, 'temp');
 await fs.mkdir(TEMP_DIR, { recursive: true }).catch(() => {});
 
-// Mapa para guardar rutas (evita el límite de 64 bytes de callback_data)
+// ✅ Mini servidor HTTP para que Render no mate el servicio
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end('Bot corriendo');
+}).listen(PORT, () => {
+  console.log(`🌐 Servidor HTTP en puerto ${PORT}`);
+});
+
 const sessions = new Map();
 
 console.log('🤖 Bot de Cursos de Ajedrez iniciado...');
@@ -38,11 +46,8 @@ bot.on('document', async (msg) => {
     fileStream.pipe(writeStream);
     await new Promise(r => writeStream.on('finish', r));
 
-    // Guardamos la ruta con un ID corto
-    const sessionId = Date.now().toString(36); // ej: "m5fba3k"
+    const sessionId = Date.now().toString(36);
     sessions.set(sessionId, filePath);
-
-    // Limpieza automática después de 10 minutos
     setTimeout(() => sessions.delete(sessionId), 10 * 60 * 1000);
 
     const opts = {
@@ -67,7 +72,6 @@ bot.on('callback_query', async (query) => {
 
   await bot.answerCallbackQuery(query.id, { text: "Generando curso..." });
 
-  // Recuperamos la ruta real desde el mapa
   const pgnPath = sessions.get(sessionId);
   if (!pgnPath) {
     return bot.sendMessage(chatId, "❌ Sesión expirada. Vuelve a enviar el archivo .pgn");
