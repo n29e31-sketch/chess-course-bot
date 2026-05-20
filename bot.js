@@ -15,7 +15,6 @@ const bot = new TelegramBot(TOKEN, { polling: true });
 const TEMP_DIR = path.join(__dirname, 'temp');
 await fs.mkdir(TEMP_DIR, { recursive: true }).catch(() => {});
 
-// ✅ Mini servidor HTTP para que Render no mate el servicio
 const PORT = process.env.PORT || 3000;
 http.createServer((req, res) => {
   res.writeHead(200);
@@ -36,10 +35,14 @@ bot.on('document', async (msg) => {
     return bot.sendMessage(chatId, "❌ Solo acepto archivos .pgn");
   }
 
-  try {
-    await bot.sendMessage(chatId, "📥 Recibí tu PGN. Generando curso...");
+  // Guardar nombre original del PGN (sin timestamp)
+  const originalName = file.file_name;
 
-    const filePath = path.join(TEMP_DIR, `${Date.now()}-${file.file_name}`);
+  let statusMsg = await bot.sendMessage(chatId, "📥 Recibí tu PGN. Generando curso...");
+
+  try {
+    // Archivo temporal con timestamp para evitar colisiones
+    const filePath = path.join(TEMP_DIR, `${Date.now()}-${originalName}`);
     const fileStream = await bot.getFileStream(file.file_id);
     const writeStream = (await import('node:fs')).createWriteStream(filePath);
 
@@ -47,51 +50,71 @@ bot.on('document', async (msg) => {
     await new Promise(r => writeStream.on('finish', r));
 
     const sessionId = Date.now().toString(36);
-    sessions.set(sessionId, filePath);
+    // Guardamos ruta Y nombre original
+    sessions.set(sessionId, { filePath, originalName });
     setTimeout(() => sessions.delete(sessionId), 10 * 60 * 1000);
 
-    const opts = {
+    // Editar el mensaje anterior en vez de mandar uno nuevo
+    await bot.editMessageText("Elige el tipo de curso:", {
+      chat_id: chatId,
+      message_id: statusMsg.message_id,
       reply_markup: {
         inline_keyboard: [
           [{ text: "⚡ Versión Ligera", callback_data: `light|${sessionId}` }],
           [{ text: "🌟 Versión Completa (Pesada)", callback_data: `heavy|${sessionId}` }]
         ]
       }
-    };
+    });
 
-    await bot.sendMessage(chatId, "Elige el tipo de curso:", opts);
   } catch (err) {
     console.error(err);
-    bot.sendMessage(chatId, "❌ Error al descargar el archivo.");
+    bot.editMessageText("❌ Error al descargar el archivo.", {
+      chat_id: chatId,
+      message_id: statusMsg.message_id
+    });
   }
 });
 
 bot.on('callback_query', async (query) => {
   const [mode, sessionId] = query.data.split('|');
   const chatId = query.message.chat.id;
+  const messageId = query.message.message_id;
 
   await bot.answerCallbackQuery(query.id, { text: "Generando curso..." });
 
-  const pgnPath = sessions.get(sessionId);
-  if (!pgnPath) {
-    return bot.sendMessage(chatId, "❌ Sesión expirada. Vuelve a enviar el archivo .pgn");
+  const session = sessions.get(sessionId);
+  if (!session) {
+    return bot.editMessageText("❌ Sesión expirada. Vuelve a enviar el archivo .pgn", {
+      chat_id: chatId,
+      message_id: messageId
+    });
   }
 
-  await bot.sendMessage(chatId, `🔄 Generando versión ${mode === 'light' ? 'Ligera' : 'Completa'}...`);
+  const { filePath: pgnPath, originalName } = session;
+
+  // Editar el mensaje de botones con el estado actual
+  await bot.editMessageText(`🔄 Generando versión ${mode === 'light' ? 'Ligera ⚡' : 'Completa 🌟'}...`, {
+    chat_id: chatId,
+    message_id: messageId
+  });
 
   try {
     const templateFile = mode === 'light' ? 'course-template-light.html' : 'course-template-heavy.html';
     const templatePath = path.join(__dirname, templateFile);
     const generateScript = path.join(__dirname, 'generate-course.mjs');
 
-    const outputName = path.basename(pgnPath, '.pgn') + '.html';
+    // ✅ Nombre del HTML = mismo nombre del PGN, sin timestamp
+    const outputName = originalName.replace(/\.pgn$/i, '.html');
     const outPath = path.join(TEMP_DIR, outputName);
 
     const command = `node "${generateScript}" --pgn "${pgnPath}" --template "${templatePath}" --out "${outPath}"`;
     await execAsync(command, { cwd: __dirname });
 
+    // Borrar el mensaje de estado antes de enviar el archivo
+    await bot.deleteMessage(chatId, messageId).catch(() => {});
+
     await bot.sendDocument(chatId, outPath, {
-      caption: `✅ ¡Curso generado!\nModo: ${mode === 'light' ? 'Ligera ⚡' : 'Completa 🌟'}`
+      caption: `✅ ${outputName}`
     });
 
     sessions.delete(sessionId);
@@ -100,6 +123,9 @@ bot.on('callback_query', async (query) => {
 
   } catch (err) {
     console.error(err);
-    bot.sendMessage(chatId, `❌ Error al generar el curso:\n${err.message}`);
+    bot.editMessageText(`❌ Error al generar el curso:\n${err.message}`, {
+      chat_id: chatId,
+      message_id: messageId
+    });
   }
 });
