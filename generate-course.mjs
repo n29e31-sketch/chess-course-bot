@@ -433,7 +433,10 @@ function courseFromPgn(pgnText, courseNameFallback) {
       result: headerResult,
       color: 'white',
       initial: initialFen,
-      data
+      data,
+      white: headers.White || null,
+      black: headers.Black || null,
+      date: headers.Date || null
     };
     if (preamble) game.openingComment = preamble;
 
@@ -441,6 +444,9 @@ function courseFromPgn(pgnText, courseNameFallback) {
       oid: String(gi + 1),
       title,
       result: headerResult,
+      white: headers.White || null,
+      black: headers.Black || null,
+      date: headers.Date || null,
       game
     });
   }

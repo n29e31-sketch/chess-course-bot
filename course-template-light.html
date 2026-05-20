@@ -589,6 +589,9 @@ body.trainer-active.trainer-complete .trainer-board-hint { display: none !import
         <button id="btn-next-var-h" title="Next variation">&#x203a;</button>
       </div>
     </div>
+    <div id="player-info" style="display:none;padding:4px 14px 6px;font-size:13px;color:var(--text-dim);border-bottom:1px solid rgba(255,255,255,0.06);">
+      <span id="player-white">⬜ </span><span style="margin:0 6px;opacity:0.4;">vs</span><span id="player-black"> ⬛</span><span id="player-date" style="margin-left:10px;opacity:0.5;font-size:12px;"></span>
+    </div>
     <div class="teach-comment" id="notation"></div>
     <div class="trainer-panel" id="trainer-panel">
       <div class="trainer-comment" id="trainer-comment"></div>
@@ -1154,9 +1157,12 @@ function buildSidebarFromCourse() {
       const oid = String(v.oid ?? '');
       const vt = v.title || (v.game && v.game.title) || 'Variation';
       const res = v.result != null ? v.result : (v.game && v.game.result);
-      const suffix = res && res !== '*' ? ' | ' + res : '';
+      const suffix = res && res !== '*' ? ' <span style="opacity:0.5;font-size:11px">' + escHtml(res) + '</span>' : '';
+      const w = v.white || (v.game && v.game.white);
+      const b = v.black || (v.game && v.game.black);
+      const players = (w && b) ? '<div style="font-size:11px;color:var(--text-dim);margin-top:2px">⬜ ' + escHtml(w) + ' vs ⬛ ' + escHtml(b) + '</div>' : '';
       chunks.push('<div class="var-item" data-oid="' + escHtml(oid) + '"><span class="var-name">' +
-        escHtml(vt + suffix) + '</span></div>');
+        escHtml(vt) + suffix + '</span>' + players + '</div>');
     }
     chunks.push('</div>');
   }
@@ -1694,6 +1700,20 @@ function loadVariation(oid) {
   document.getElementById('var-title').textContent = currentVar.title || '';
   const mt = document.getElementById('mobile-title');
   if (mt) mt.textContent = currentVar.title || '';
+  // Update player info
+  const piEl = document.getElementById('player-info');
+  if (piEl) {
+    const w = currentVar.white, b = currentVar.black, d = currentVar.date;
+    if (w && b) {
+      document.getElementById('player-white').textContent = '⬜ ' + w;
+      document.getElementById('player-black').textContent = ' ⬛ ' + b;
+      const dateEl = document.getElementById('player-date');
+      dateEl.textContent = (d && d !== '????.??.??') ? d.replace(/\?/g,'') : '';
+      piEl.style.display = '';
+    } else {
+      piEl.style.display = 'none';
+    }
+  }
   // Close mobile sidebar on variation select
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('mobileOverlay');
