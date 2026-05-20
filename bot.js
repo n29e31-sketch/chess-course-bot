@@ -10,7 +10,23 @@ const execAsync = promisify(exec);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const TOKEN = process.env.BOT_TOKEN;
-const bot = new TelegramBot(TOKEN, { polling: true });
+
+// ✅ Evita instancias duplicadas (polling conflict)
+const bot = new TelegramBot(TOKEN, {
+  polling: {
+    autoStart: true,
+    params: { timeout: 10 },
+    interval: 2000
+  }
+});
+
+bot.on('polling_error', (err) => {
+  if (err.code === 'ETELEGRAM' && err.message.includes('409')) {
+    console.warn('⚠️ Otra instancia detectada, reintentando...');
+  } else {
+    console.error('polling_error:', err.message);
+  }
+});
 
 const TEMP_DIR = path.join(__dirname, 'temp');
 await fs.mkdir(TEMP_DIR, { recursive: true }).catch(() => {});
@@ -24,7 +40,6 @@ http.createServer((req, res) => {
 });
 
 const sessions = new Map();
-
 console.log('🤖 Bot de Cursos de Ajedrez iniciado...');
 
 bot.on('document', async (msg) => {
@@ -35,26 +50,21 @@ bot.on('document', async (msg) => {
     return bot.sendMessage(chatId, "❌ Solo acepto archivos .pgn");
   }
 
-  // Guardar nombre original del PGN (sin timestamp)
   const originalName = file.file_name;
-
-  let statusMsg = await bot.sendMessage(chatId, "📥 Recibí tu PGN. Generando curso...");
+  const statusMsg = await bot.sendMessage(chatId, "📥 Recibí tu PGN...");
 
   try {
-    // Archivo temporal con timestamp para evitar colisiones
+    // Timestamp solo en el nombre del archivo temporal, no en el curso
     const filePath = path.join(TEMP_DIR, `${Date.now()}-${originalName}`);
     const fileStream = await bot.getFileStream(file.file_id);
     const writeStream = (await import('node:fs')).createWriteStream(filePath);
-
     fileStream.pipe(writeStream);
     await new Promise(r => writeStream.on('finish', r));
 
     const sessionId = Date.now().toString(36);
-    // Guardamos ruta Y nombre original
     sessions.set(sessionId, { filePath, originalName });
     setTimeout(() => sessions.delete(sessionId), 10 * 60 * 1000);
 
-    // Editar el mensaje anterior en vez de mandar uno nuevo
     await bot.editMessageText("Elige el tipo de curso:", {
       chat_id: chatId,
       message_id: statusMsg.message_id,
@@ -71,7 +81,7 @@ bot.on('document', async (msg) => {
     bot.editMessageText("❌ Error al descargar el archivo.", {
       chat_id: chatId,
       message_id: statusMsg.message_id
-    });
+    }).catch(() => {});
   }
 });
 
@@ -87,12 +97,11 @@ bot.on('callback_query', async (query) => {
     return bot.editMessageText("❌ Sesión expirada. Vuelve a enviar el archivo .pgn", {
       chat_id: chatId,
       message_id: messageId
-    });
+    }).catch(() => {});
   }
 
   const { filePath: pgnPath, originalName } = session;
 
-  // Editar el mensaje de botones con el estado actual
   await bot.editMessageText(`🔄 Generando versión ${mode === 'light' ? 'Ligera ⚡' : 'Completa 🌟'}...`, {
     chat_id: chatId,
     message_id: messageId
@@ -103,14 +112,14 @@ bot.on('callback_query', async (query) => {
     const templatePath = path.join(__dirname, templateFile);
     const generateScript = path.join(__dirname, 'generate-course.mjs');
 
-    // ✅ Nombre del HTML = mismo nombre del PGN, sin timestamp
     const outputName = originalName.replace(/\.pgn$/i, '.html');
     const outPath = path.join(TEMP_DIR, outputName);
 
-    const command = `node "${generateScript}" --pgn "${pgnPath}" --template "${templatePath}" --out "${outPath}"`;
+    // ✅ --name pasa el nombre limpio sin timestamp al curso
+    const courseName = originalName.replace(/\.pgn$/i, '');
+    const command = `node "${generateScript}" --pgn "${pgnPath}" --template "${templatePath}" --out "${outPath}" --name "${courseName}"`;
     await execAsync(command, { cwd: __dirname });
 
-    // Borrar el mensaje de estado antes de enviar el archivo
     await bot.deleteMessage(chatId, messageId).catch(() => {});
 
     await bot.sendDocument(chatId, outPath, {
@@ -126,6 +135,6 @@ bot.on('callback_query', async (query) => {
     bot.editMessageText(`❌ Error al generar el curso:\n${err.message}`, {
       chat_id: chatId,
       message_id: messageId
-    });
+    }).catch(() => {});
   }
 });
