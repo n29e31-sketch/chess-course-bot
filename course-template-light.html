@@ -515,6 +515,36 @@ body.trainer-active.trainer-complete .trainer-board-hint { display: none !import
   /* Hide fullscreen button on desktop */
   #btn-fs { display: none; }
 }
+
+/* ===== Game info bar (right panel, under title) ===== */
+.game-info-bar {
+  display: none;
+  flex-direction: column;
+  padding: 5px 16px 7px;
+  gap: 2px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+.game-info-bar.visible { display: flex; }
+.game-info-bar .gib-players {
+  font-size: 13.5px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.game-info-bar .gib-players .gib-sq {
+  display: inline-block; width: 11px; height: 11px;
+  border-radius: 2px; border: 1px solid rgba(255,255,255,0.2);
+  vertical-align: middle; margin-right: 2px;
+}
+.game-info-bar .gib-players .gib-sq.w { background: #f0d9b5; }
+.game-info-bar .gib-players .gib-sq.b { background: #2d2d2d; }
+.game-info-bar .gib-players .gib-elo { font-size: 11.5px; font-weight: 400; opacity: 0.55; }
+.game-info-bar .gib-players .gib-res { font-size: 12px; font-weight: 400; opacity: 0.7; margin-left: 6px; }
+.game-info-bar .gib-meta {
+  font-size: 11.5px; color: var(--text-dim); opacity: 0.8;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 </style>
 </head>
 <body>
@@ -589,9 +619,7 @@ body.trainer-active.trainer-complete .trainer-board-hint { display: none !import
         <button id="btn-next-var-h" title="Next variation">&#x203a;</button>
       </div>
     </div>
-    <div id="player-info" style="display:none;padding:4px 14px 6px;font-size:13px;color:var(--text-dim);border-bottom:1px solid rgba(255,255,255,0.06);">
-      <span id="player-white">⬜ </span><span style="margin:0 6px;opacity:0.4;">vs</span><span id="player-black"> ⬛</span><span id="player-date" style="margin-left:10px;opacity:0.5;font-size:12px;"></span>
-    </div>
+
     <div class="teach-comment" id="notation"></div>
     <div class="trainer-panel" id="trainer-panel">
       <div class="trainer-comment" id="trainer-comment"></div>
@@ -1636,7 +1664,37 @@ function clearActive() {
 }
 
 // ===== LOAD VARIATION =====
-function loadVariation(oid) {
+
+  // ── Game info bar ─────────────────────────────────────────────────────────
+  function updateGameInfoBar(v) {
+    const bar = document.getElementById('game-info-bar');
+    if (!bar) return;
+    const g = v.game || v;
+    const white  = g.white  || v.white;
+    const black  = g.black  || v.black;
+    const wElo   = g.whiteElo || v.whiteElo;
+    const bElo   = g.blackElo || v.blackElo;
+    const result = (g.result || v.result || '').replace('*','').trim();
+    const date   = (g.date   || v.date   || '').replace(/[?]/g,'').replace(/\.$/,'').trim();
+    const event  = (g.event  || v.event  || '').replace(/[?]/g,'').trim();
+    const site   = (g.site   || v.site   || '').replace(/[?]/g,'').trim();
+    const round  = (g.round  || v.round  || '').replace(/[?]/g,'').trim();
+    if (!white || !black) { bar.classList.remove('visible'); return; }
+    document.getElementById('gib-white').textContent  = white;
+    document.getElementById('gib-black').textContent  = black;
+    document.getElementById('gib-welo').textContent   = wElo  ? ' (' + wElo + ')' : '';
+    document.getElementById('gib-belo').textContent   = bElo  ? ' (' + bElo + ')' : '';
+    document.getElementById('gib-result').textContent = result ? '  ' + result : '';
+    const parts = [];
+    if (date)  parts.push('📅 ' + date);
+    if (event) parts.push('🏆 ' + event);
+    if (site && site !== event) parts.push('📍 ' + site);
+    if (round) parts.push('🔢 R' + round);
+    document.getElementById('gib-meta').textContent = parts.join('  ·  ');
+    bar.classList.add('visible');
+  }
+
+  function loadVariation(oid) {
   _freeExploreFen = null;
   let found = false;
   for (const ch of COURSE.chapters) {
@@ -1698,22 +1756,10 @@ function loadVariation(oid) {
 
   // Update title
   document.getElementById('var-title').textContent = currentVar.title || '';
+  updateGameInfoBar(currentVar);
   const mt = document.getElementById('mobile-title');
   if (mt) mt.textContent = currentVar.title || '';
-  // Update player info
-  const piEl = document.getElementById('player-info');
-  if (piEl) {
-    const w = currentVar.white, b = currentVar.black, d = currentVar.date;
-    if (w && b) {
-      document.getElementById('player-white').textContent = '⬜ ' + w;
-      document.getElementById('player-black').textContent = ' ⬛ ' + b;
-      const dateEl = document.getElementById('player-date');
-      dateEl.textContent = (d && d !== '????.??.??') ? d.replace(/\?/g,'') : '';
-      piEl.style.display = '';
-    } else {
-      piEl.style.display = 'none';
-    }
-  }
+
   // Close mobile sidebar on variation select
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('mobileOverlay');

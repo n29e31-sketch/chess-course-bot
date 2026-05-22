@@ -436,7 +436,12 @@ function courseFromPgn(pgnText, courseNameFallback) {
       data,
       white: headers.White || null,
       black: headers.Black || null,
-      date: headers.Date || null
+      whiteElo: headers.WhiteElo || null,
+      blackElo: headers.BlackElo || null,
+      date: headers.Date || null,
+      event: headers.Event || null,
+      site: headers.Site || null,
+      round: headers.Round || null,
     };
     if (preamble) game.openingComment = preamble;
 
@@ -446,7 +451,12 @@ function courseFromPgn(pgnText, courseNameFallback) {
       result: headerResult,
       white: headers.White || null,
       black: headers.Black || null,
+      whiteElo: headers.WhiteElo || null,
+      blackElo: headers.BlackElo || null,
       date: headers.Date || null,
+      event: headers.Event || null,
+      site: headers.Site || null,
+      round: headers.Round || null,
       game
     });
   }
