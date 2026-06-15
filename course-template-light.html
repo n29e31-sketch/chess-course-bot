@@ -529,21 +529,32 @@ body.trainer-active.trainer-complete .trainer-board-hint { display: none !import
 }
 .game-info-bar.visible { display: flex; }
 .game-info-bar .gib-players {
-  font-size: 13.5px; font-weight: 600; color: var(--text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .game-info-bar .gib-players .gib-sq {
-  display: inline-block; width: 11px; height: 11px;
-  border-radius: 2px; border: 1px solid rgba(255,255,255,0.2);
-  vertical-align: middle; margin-right: 2px;
+  display: inline-block;
+  width: 11px; height: 11px;
+  border-radius: 2px;
+  border: 1px solid rgba(255,255,255,0.2);
+  vertical-align: middle;
+  margin-right: 2px;
 }
 .game-info-bar .gib-players .gib-sq.w { background: #f0d9b5; }
 .game-info-bar .gib-players .gib-sq.b { background: #2d2d2d; }
 .game-info-bar .gib-players .gib-elo { font-size: 11.5px; font-weight: 400; opacity: 0.55; }
 .game-info-bar .gib-players .gib-res { font-size: 12px; font-weight: 400; opacity: 0.7; margin-left: 6px; }
 .game-info-bar .gib-meta {
-  font-size: 11.5px; color: var(--text-dim); opacity: 0.8;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 11.5px;
+  color: var(--text-dim);
+  opacity: 0.8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
 </head>
@@ -619,7 +630,15 @@ body.trainer-active.trainer-complete .trainer-board-hint { display: none !import
         <button id="btn-next-var-h" title="Next variation">&#x203a;</button>
       </div>
     </div>
-
+    <div class="game-info-bar" id="game-info-bar">
+      <div class="gib-players">
+        <span class="gib-sq w"></span><span id="gib-white"></span><span id="gib-welo" class="gib-elo"></span>
+        <span style="opacity:0.35;margin:0 4px">vs</span>
+        <span class="gib-sq b"></span><span id="gib-black"></span><span id="gib-belo" class="gib-elo"></span>
+        <span id="gib-result" class="gib-res"></span>
+      </div>
+      <div class="gib-meta" id="gib-meta"></div>
+    </div>
     <div class="teach-comment" id="notation"></div>
     <div class="trainer-panel" id="trainer-panel">
       <div class="trainer-comment" id="trainer-comment"></div>
@@ -1185,12 +1204,9 @@ function buildSidebarFromCourse() {
       const oid = String(v.oid ?? '');
       const vt = v.title || (v.game && v.game.title) || 'Variation';
       const res = v.result != null ? v.result : (v.game && v.game.result);
-      const suffix = res && res !== '*' ? ' <span style="opacity:0.5;font-size:11px">' + escHtml(res) + '</span>' : '';
-      const w = v.white || (v.game && v.game.white);
-      const b = v.black || (v.game && v.game.black);
-      const players = (w && b) ? '<div style="font-size:11px;color:var(--text-dim);margin-top:2px">⬜ ' + escHtml(w) + ' vs ⬛ ' + escHtml(b) + '</div>' : '';
+      const suffix = res && res !== '*' ? ' | ' + res : '';
       chunks.push('<div class="var-item" data-oid="' + escHtml(oid) + '"><span class="var-name">' +
-        escHtml(vt) + suffix + '</span>' + players + '</div>');
+        escHtml(vt + suffix) + '</span></div>');
     }
     chunks.push('</div>');
   }
@@ -1679,18 +1695,22 @@ function clearActive() {
     const event  = (g.event  || v.event  || '').replace(/[?]/g,'').trim();
     const site   = (g.site   || v.site   || '').replace(/[?]/g,'').trim();
     const round  = (g.round  || v.round  || '').replace(/[?]/g,'').trim();
+
     if (!white || !black) { bar.classList.remove('visible'); return; }
+
     document.getElementById('gib-white').textContent  = white;
     document.getElementById('gib-black').textContent  = black;
     document.getElementById('gib-welo').textContent   = wElo  ? ' (' + wElo + ')' : '';
     document.getElementById('gib-belo').textContent   = bElo  ? ' (' + bElo + ')' : '';
     document.getElementById('gib-result').textContent = result ? '  ' + result : '';
+
     const parts = [];
     if (date)  parts.push('📅 ' + date);
     if (event) parts.push('🏆 ' + event);
     if (site && site !== event) parts.push('📍 ' + site);
     if (round) parts.push('🔢 R' + round);
     document.getElementById('gib-meta').textContent = parts.join('  ·  ');
+
     bar.classList.add('visible');
   }
 
@@ -1759,7 +1779,6 @@ function clearActive() {
   updateGameInfoBar(currentVar);
   const mt = document.getElementById('mobile-title');
   if (mt) mt.textContent = currentVar.title || '';
-
   // Close mobile sidebar on variation select
   const sb = document.getElementById('sidebar');
   const ov = document.getElementById('mobileOverlay');
