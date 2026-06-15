@@ -11,7 +11,6 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const TOKEN = process.env.BOT_TOKEN;
 
-// ✅ Evita instancias duplicadas (polling conflict)
 const bot = new TelegramBot(TOKEN, {
   polling: {
     autoStart: true,
@@ -42,6 +41,61 @@ http.createServer((req, res) => {
 const sessions = new Map();
 console.log('🤖 Bot de Cursos de Ajedrez iniciado...');
 
+// ─── Textos ───────────────────────────────────────────────────────────────────
+
+const WELCOME_TEXT = `♟️ *Bienvenido al Chess Course Bot*
+
+Convierte archivos PGN en cursos interactivos de ajedrez en formato HTML.
+
+Envíame un archivo *.pgn* y elige el tipo de curso que deseas generar.
+
+Usa /help para ver todas las funcionalidades.`;
+
+const HELP_TEXT = `ℹ️ *¿Cómo funciona el bot?*
+
+*1. Envía un archivo PGN*
+Adjunta cualquier archivo \`.pgn\` (partidas, aperturas, análisis) y el bot lo procesará automáticamente.
+
+*2. Elige el tipo de curso*
+Tendrás 3 opciones:
+
+⚡ *Versión Ligera*
+HTML de ~250kb. Ideal para compartir y uso en móvil. Sin tema de tablero especial.
+
+🌟 *Versión Completa*
+HTML de ~5.7mb. Incluye el tema de tablero CB Teca con mayor detalle visual.
+
+⬇️ *Con descarga PGN*
+Versión ligera que incluye un botón para descargar el PGN original desde el propio HTML.
+
+*3. Recibe tu HTML*
+El bot genera el archivo y te lo entrega listo para abrir en cualquier navegador, sin internet.
+
+*Límites*
+• Sesión activa por 10 minutos tras enviar el PGN
+• Archivos de hasta 20MB (límite de Telegram)`;
+
+// ─── Comandos ─────────────────────────────────────────────────────────────────
+
+bot.onText(/\/start/, async (msg) => {
+  const chatId = msg.chat.id;
+  await bot.sendMessage(chatId, WELCOME_TEXT, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: 'ℹ️ ¿Cómo funciona?', callback_data: 'show_help' }]
+      ]
+    }
+  });
+});
+
+bot.onText(/\/help/, async (msg) => {
+  const chatId = msg.chat.id;
+  await bot.sendMessage(chatId, HELP_TEXT, { parse_mode: 'Markdown' });
+});
+
+// ─── Documento PGN ────────────────────────────────────────────────────────────
+
 bot.on('document', async (msg) => {
   const chatId = msg.chat.id;
   const file = msg.document;
@@ -54,7 +108,6 @@ bot.on('document', async (msg) => {
   const statusMsg = await bot.sendMessage(chatId, "📥 Recibí tu PGN...");
 
   try {
-    // Timestamp solo en el nombre del archivo temporal, no en el curso
     const filePath = path.join(TEMP_DIR, `${Date.now()}-${originalName}`);
     const fileStream = await bot.getFileStream(file.file_id);
     const writeStream = (await import('node:fs')).createWriteStream(filePath);
@@ -70,8 +123,10 @@ bot.on('document', async (msg) => {
       message_id: statusMsg.message_id,
       reply_markup: {
         inline_keyboard: [
-          [{ text: "⚡ Versión Ligera", callback_data: `light|${sessionId}` }],
-          [{ text: "🌟 Versión Completa (Pesada)", callback_data: `heavy|${sessionId}` }]
+          [{ text: "⚡ Versión Ligera",       callback_data: `light|${sessionId}` }],
+          [{ text: "🌟 Versión Completa",      callback_data: `heavy|${sessionId}` }],
+          [{ text: "⬇️ Con descarga PGN",     callback_data: `pgn|${sessionId}`   }],
+          [{ text: "❌ Cancelar",              callback_data: `cancel|${sessionId}`}]
         ]
       }
     });
@@ -85,11 +140,31 @@ bot.on('document', async (msg) => {
   }
 });
 
+// ─── Callbacks ────────────────────────────────────────────────────────────────
+
 bot.on('callback_query', async (query) => {
-  const [mode, sessionId] = query.data.split('|');
-  const chatId = query.message.chat.id;
+  const [action, sessionId] = query.data.split('|');
+  const chatId   = query.message.chat.id;
   const messageId = query.message.message_id;
 
+  // ── Mostrar help desde /start ──
+  if (action === 'show_help') {
+    await bot.answerCallbackQuery(query.id);
+    await bot.sendMessage(chatId, HELP_TEXT, { parse_mode: 'Markdown' });
+    return;
+  }
+
+  // ── Cancelar ──
+  if (action === 'cancel') {
+    await bot.answerCallbackQuery(query.id);
+    sessions.delete(sessionId);
+    await bot.deleteMessage(chatId, messageId).catch(() => {});
+    const cancelMsg = await bot.sendMessage(chatId, "❌ Cancelado");
+    setTimeout(() => bot.deleteMessage(chatId, cancelMsg.message_id).catch(() => {}), 3000);
+    return;
+  }
+
+  // ── Generar curso ──
   await bot.answerCallbackQuery(query.id, { text: "Generando curso..." });
 
   const session = sessions.get(sessionId);
@@ -101,29 +176,38 @@ bot.on('callback_query', async (query) => {
   }
 
   const { filePath: pgnPath, originalName } = session;
+  const modeLabel = action === 'light' ? 'Ligera ⚡' : action === 'heavy' ? 'Completa 🌟' : 'Con PGN ⬇️';
 
-  await bot.editMessageText(`🔄 Generando versión ${mode === 'light' ? 'Ligera ⚡' : 'Completa 🌟'}...`, {
+  await bot.editMessageText(`🔄 Generando versión ${modeLabel}...`, {
     chat_id: chatId,
     message_id: messageId
   });
 
   try {
-    const templateFile = mode === 'light' ? 'course-template-light.html' : 'course-template-heavy.html';
-    const templatePath = path.join(__dirname, templateFile);
-    const generateScript = path.join(__dirname, 'generate-course.mjs');
+    // Seleccionar template y script según modo
+    const templateFile  = action === 'heavy'
+      ? 'course-template-heavy.html'
+      : action === 'pgn'
+        ? 'course-template-pgn.html'
+        : 'course-template-light.html';
 
-    const outputName = originalName.replace(/\.pgn$/i, '.html');
-    const outPath = path.join(TEMP_DIR, outputName);
+    const scriptFile    = action === 'pgn'
+      ? 'generate-course-pgn.mjs'
+      : 'generate-course.mjs';
 
-    // ✅ --name pasa el nombre limpio sin timestamp al curso
-    const courseName = originalName.replace(/\.pgn$/i, '');
+    const templatePath  = path.join(__dirname, templateFile);
+    const generateScript = path.join(__dirname, scriptFile);
+    const courseName    = originalName.replace(/\.pgn$/i, '');
+    const outputName    = originalName.replace(/\.pgn$/i, '.html');
+    const outPath       = path.join(TEMP_DIR, outputName);
+
     const command = `node "${generateScript}" --pgn "${pgnPath}" --template "${templatePath}" --out "${outPath}" --name "${courseName}"`;
     await execAsync(command, { cwd: __dirname });
 
     await bot.deleteMessage(chatId, messageId).catch(() => {});
 
     await bot.sendDocument(chatId, outPath, {
-      caption: `✅ ${outputName}`
+      caption: `✅ ${outputName} · ${modeLabel}`
     });
 
     sessions.delete(sessionId);
