@@ -1,9 +1,34 @@
-node_modules/ 
-node_modules/ 
-temp/ 
-railway 
-scripts/ 
-"*.pgn" 
-"*.txt" 
-"*.png" 
-"escritorio/" 
+# Dependencias
+node_modules/
+
+# Archivos temporales del bot
+temp/
+
+# Variables de entorno (importante: no subir el token)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos que no deben subirse
+*.pgn
+*.txt
+*.png
+escritorio/
+railway/
+scripts/
+
+# Otros
+.idea/
+.vscode/
+*.swp

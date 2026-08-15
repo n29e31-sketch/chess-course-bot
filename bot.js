@@ -1,224 +1,147 @@
 import TelegramBot from 'node-telegram-bot-api';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
-import http from 'node:http';
 
 const execAsync = promisify(exec);
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const TOKEN = process.env.BOT_TOKEN;
+// ========== CONFIGURACIÓN ==========
+const TOKEN = process.env.TOKEN; // ← Se toma de Render (Environment Variable)
 
-const bot = new TelegramBot(TOKEN, {
-  polling: {
-    autoStart: true,
-    params: { timeout: 10 },
-    interval: 2000
-  }
-});
+if (!TOKEN) {
+  console.error('❌ ERROR: Falta la variable de entorno TOKEN');
+  process.exit(1);
+}
 
-bot.on('polling_error', (err) => {
-  if (err.code === 'ETELEGRAM' && err.message.includes('409')) {
-    console.warn('⚠️ Otra instancia detectada, reintentando...');
-  } else {
-    console.error('polling_error:', err.message);
-  }
-});
+const bot = new TelegramBot(TOKEN, { polling: true });
+const TEMP_DIR = './temp';
 
-const TEMP_DIR = path.join(__dirname, 'temp');
 await fs.mkdir(TEMP_DIR, { recursive: true }).catch(() => {});
 
-const PORT = process.env.PORT || 3000;
-http.createServer((req, res) => {
-  res.writeHead(200);
-  res.end('Bot corriendo');
-}).listen(PORT, () => {
-  console.log(`🌐 Servidor HTTP en puerto ${PORT}`);
+console.log('🤖 Bot de Cursos de Ajedrez iniciado correctamente');
+
+// ========== COMANDO /start ==========
+bot.onText(/\/start/, (msg) => {
+  bot.sendMessage(msg.chat.id,
+`♟️ *Bot Generador de Cursos de Ajedrez*
+
+Envíame un archivo \`.pgn\` y elige la versión:
+
+⚡ *Versión Ligera* — Rápida y ligera
+🌟 *Versión Completa* — Con más funciones
+🚀 *Version 13* — Grafo + Constelación temática
+
+Envía el archivo PGN para comenzar.`,
+  { parse_mode: 'Markdown' });
 });
 
-const sessions = new Map();
-console.log('🤖 Bot de Cursos de Ajedrez iniciado...');
-
-// ─── Textos ───────────────────────────────────────────────────────────────────
-
-const WELCOME_TEXT = `♟️ *Bienvenido al Chess Course Bot*
-
-Convierte archivos PGN en cursos interactivos de ajedrez en formato HTML.
-
-Envíame un archivo *.pgn* y elige el tipo de curso que deseas generar.
-
-Usa /help para ver todas las funcionalidades.`;
-
-const HELP_TEXT = `ℹ️ *¿Cómo funciona el bot?*
-
-*1. Envía un archivo PGN*
-Adjunta cualquier archivo \`.pgn\` (partidas, aperturas, análisis) y el bot lo procesará automáticamente.
-
-*2. Elige el tipo de curso*
-Tendrás 3 opciones:
-
-⚡ *Versión Ligera*
-HTML de ~250kb. Ideal para compartir y uso en móvil. Sin tema de tablero especial.
-
-🌟 *Versión Completa*
-HTML de ~5.7mb. Incluye el tema de tablero CB Teca con mayor detalle visual.
-
-⬇️ *Con descarga PGN*
-Versión ligera que incluye un botón para descargar el PGN original desde el propio HTML.
-
-*3. Recibe tu HTML*
-El bot genera el archivo y te lo entrega listo para abrir en cualquier navegador, sin internet.
-
-*Límites*
-• Sesión activa por 10 minutos tras enviar el PGN
-• Archivos de hasta 20MB (límite de Telegram)`;
-
-// ─── Comandos ─────────────────────────────────────────────────────────────────
-
-bot.onText(/\/start/, async (msg) => {
-  const chatId = msg.chat.id;
-  await bot.sendMessage(chatId, WELCOME_TEXT, {
-    parse_mode: 'Markdown',
-    reply_markup: {
-      inline_keyboard: [
-        [{ text: 'ℹ️ ¿Cómo funciona?', callback_data: 'show_help' }]
-      ]
-    }
-  });
-});
-
-bot.onText(/\/help/, async (msg) => {
-  const chatId = msg.chat.id;
-  await bot.sendMessage(chatId, HELP_TEXT, { parse_mode: 'Markdown' });
-});
-
-// ─── Documento PGN ────────────────────────────────────────────────────────────
-
+// ========== RECIBIR ARCHIVO PGN ==========
 bot.on('document', async (msg) => {
   const chatId = msg.chat.id;
   const file = msg.document;
 
   if (!file.file_name?.toLowerCase().endsWith('.pgn')) {
-    return bot.sendMessage(chatId, "❌ Solo acepto archivos .pgn");
+    return bot.sendMessage(chatId, '❌ Solo acepto archivos .pgn');
   }
 
-  const originalName = file.file_name;
-  const statusMsg = await bot.sendMessage(chatId, "📥 Recibí tu PGN...");
-
   try {
-    const filePath = path.join(TEMP_DIR, `${Date.now()}-${originalName}`);
+    await bot.sendMessage(chatId, '📥 Recibí tu PGN. Procesando...');
+
+    // Nombre limpio (sin espacios raros)
+    const safeName = file.file_name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+    const filePath = path.join(TEMP_DIR, `${Date.now()}-${safeName}`);
+
     const fileStream = await bot.getFileStream(file.file_id);
     const writeStream = (await import('node:fs')).createWriteStream(filePath);
+
     fileStream.pipe(writeStream);
-    await new Promise(r => writeStream.on('finish', r));
-
-    const sessionId = Date.now().toString(36);
-    sessions.set(sessionId, { filePath, originalName });
-    setTimeout(() => sessions.delete(sessionId), 10 * 60 * 1000);
-
-    await bot.editMessageText("Elige el tipo de curso:", {
-      chat_id: chatId,
-      message_id: statusMsg.message_id,
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "⚡ Versión Ligera",       callback_data: `light|${sessionId}` }],
-          [{ text: "🌟 Versión Completa",      callback_data: `heavy|${sessionId}` }],
-          [{ text: "⬇️ Con descarga PGN",     callback_data: `pgn|${sessionId}`   }],
-          [{ text: "❌ Cancelar",              callback_data: `cancel|${sessionId}`}]
-        ]
-      }
+    await new Promise((resolve, reject) => {
+      writeStream.on('finish', resolve);
+      writeStream.on('error', reject);
     });
 
+    const opts = {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '⚡ Versión Ligera', callback_data: `light|${filePath}` }],
+          [{ text: '🌟 Versión Completa', callback_data: `heavy|${filePath}` }],
+          [{ text: '🚀 Version 13', callback_data: `v13|${filePath}` }]
+        ]
+      }
+    };
+
+    await bot.sendMessage(chatId, 'Elige el tipo de curso HTML:', opts);
+
   } catch (err) {
-    console.error(err);
-    bot.editMessageText("❌ Error al descargar el archivo.", {
-      chat_id: chatId,
-      message_id: statusMsg.message_id
-    }).catch(() => {});
+    console.error('Error al descargar PGN:', err);
+    bot.sendMessage(chatId, '❌ Error al descargar el archivo.');
   }
 });
 
-// ─── Callbacks ────────────────────────────────────────────────────────────────
-
+// ========== GENERAR CURSO ==========
 bot.on('callback_query', async (query) => {
-  const [action, sessionId] = query.data.split('|');
-  const chatId   = query.message.chat.id;
-  const messageId = query.message.message_id;
+  const [mode, pgnPath] = query.data.split('|');
+  const chatId = query.message.chat.id;
 
-  // ── Mostrar help desde /start ──
-  if (action === 'show_help') {
-    await bot.answerCallbackQuery(query.id);
-    await bot.sendMessage(chatId, HELP_TEXT, { parse_mode: 'Markdown' });
-    return;
-  }
+  await bot.answerCallbackQuery(query.id, { text: 'Generando curso...' });
 
-  // ── Cancelar ──
-  if (action === 'cancel') {
-    await bot.answerCallbackQuery(query.id);
-    sessions.delete(sessionId);
-    await bot.deleteMessage(chatId, messageId).catch(() => {});
-    const cancelMsg = await bot.sendMessage(chatId, "❌ Cancelado");
-    setTimeout(() => bot.deleteMessage(chatId, cancelMsg.message_id).catch(() => {}), 3000);
-    return;
-  }
-
-  // ── Generar curso ──
-  await bot.answerCallbackQuery(query.id, { text: "Generando curso..." });
-
-  const session = sessions.get(sessionId);
-  if (!session) {
-    return bot.editMessageText("❌ Sesión expirada. Vuelve a enviar el archivo .pgn", {
-      chat_id: chatId,
-      message_id: messageId
-    }).catch(() => {});
-  }
-
-  const { filePath: pgnPath, originalName } = session;
-  const modeLabel = action === 'light' ? 'Ligera ⚡' : action === 'heavy' ? 'Completa 🌟' : 'Con PGN ⬇️';
-
-  await bot.editMessageText(`🔄 Generando versión ${modeLabel}...`, {
-    chat_id: chatId,
-    message_id: messageId
-  });
+  let outPath = null;
 
   try {
-    // Seleccionar template y script según modo
-    const templateFile  = action === 'heavy'
-      ? 'course-template-heavy.html'
-      : action === 'pgn'
-        ? 'course-template-pgn.html'
-        : 'course-template-light.html';
+    const baseName = path.basename(pgnPath, '.pgn');
+    outPath = path.join(TEMP_DIR, `${baseName}-${mode}.html`);
 
-    const scriptFile    = action === 'pgn'
-      ? 'generate-course-pgn.mjs'
-      : 'generate-course.mjs';
+    let command = '';
+    let modeName = '';
 
-    const templatePath  = path.join(__dirname, templateFile);
-    const generateScript = path.join(__dirname, scriptFile);
-    const courseName    = originalName.replace(/\.pgn$/i, '');
-    const outputName    = originalName.replace(/\.pgn$/i, '.html');
-    const outPath       = path.join(TEMP_DIR, outputName);
+    if (mode === 'light') {
+      modeName = 'Ligera ⚡';
+      command = `node generate-course.mjs --pgn "${pgnPath}" --template "course-template-light.html" --out "${outPath}" --name "${baseName}"`;
+    } 
+    else if (mode === 'heavy') {
+      modeName = 'Completa 🌟';
+      command = `node generate-course.mjs --pgn "${pgnPath}" --template "course-template-heavy.html" --out "${outPath}" --name "${baseName}"`;
+    } 
+    else if (mode === 'v13') {
+      modeName = 'Version 13 🚀';
+      command = `node generate-sphere-course.mjs --pgn "${pgnPath}" --template "101-chess-tips-v13.html" --out "${outPath}" --name "${baseName}" --ejes "ejes_tematicos_ajedrez_4idiomas.json"`;
+    } 
+    else {
+      return bot.sendMessage(chatId, '❌ Opción no válida.');
+    }
 
-    const command = `node "${generateScript}" --pgn "${pgnPath}" --template "${templatePath}" --out "${outPath}" --name "${courseName}"`;
-    await execAsync(command, { cwd: __dirname });
-
-    await bot.deleteMessage(chatId, messageId).catch(() => {});
-
-    await bot.sendDocument(chatId, outPath, {
-      caption: `✅ ${outputName} · ${modeLabel}`
+    // Avisar al usuario que puede tardar
+    await bot.sendMessage(chatId, `🔄 Generando *${modeName}*...\nEsto puede tardar unos segundos.`, {
+      parse_mode: 'Markdown'
     });
 
-    sessions.delete(sessionId);
-    await fs.unlink(pgnPath).catch(() => {});
-    await fs.unlink(outPath).catch(() => {});
+    console.log('Ejecutando:', command);
+
+    // Timeout más alto para Version 13 (puede tardar más)
+    const { stdout, stderr } = await execAsync(command, { 
+      timeout: 120000, // 2 minutos
+      maxBuffer: 10 * 1024 * 1024 
+    });
+
+    if (stderr) console.error('stderr:', stderr);
+    if (stdout) console.log(stdout);
+
+    // Verificar que el HTML se generó
+    await fs.access(outPath);
+
+    await bot.sendDocument(chatId, outPath, {
+      caption: `✅ ¡Curso generado correctamente!\nModo: ${modeName}`
+    });
 
   } catch (err) {
-    console.error(err);
-    bot.editMessageText(`❌ Error al generar el curso:\n${err.message}`, {
-      chat_id: chatId,
-      message_id: messageId
-    }).catch(() => {});
+    console.error('Error al generar:', err);
+    bot.sendMessage(chatId, `❌ Error al generar el curso:\n\`${err.message}\``, {
+      parse_mode: 'Markdown'
+    });
+  } finally {
+    // Limpiar siempre los temporales
+    if (pgnPath) await fs.unlink(pgnPath).catch(() => {});
+    if (outPath) await fs.unlink(outPath).catch(() => {});
   }
 });

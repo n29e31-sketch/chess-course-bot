@@ -1,0 +1,1378 @@
+{
+  "descripcion": "Memoria de ejes temáticos de ajedrez para etiquetado de comentarios en PGN. Idiomas: es, en, ru, pt_br. Total: 27 ejes temáticos (numeración contigua 1-27, sin huecos), agrupados en 6 categorías (a-f).",
+  "notas_fusion": [
+    "Intercambio y Posición (evaluación) -> reasignados al eje 27 (Valoración)",
+    "Seguridad y Bloqueo -> reasignados al eje 13 (Profilaxis)",
+    "Desarrollo -> reasignado al eje 17 (Apertura)",
+    "Contexto -> reasignado al eje 20 (Transición)",
+    "Espacio conserva 'posición' como sinónimo (eje 22)",
+    "NOTA DE RENUMERACIÓN (v1.2): la lista original tenía un salto de numeración (saltaba del eje 20 al 22, sin eje 21) por lo que en realidad eran 26 ejes temáticos en total, no 27. Se corrigió la numeración para que fuera contigua de 1 a 26 sin huecos.",
+    "NOTA DE AMPLIACIÓN (v1.3): se añadió el eje 16 'Contragolpe (Contrajuego)' dentro de la categoría c) Defensiva, insertado justo después de Flexibilidad. Esto desplazó +1 la numeración de todos los ejes que antes eran 16 o mayores: Apertura 16->17, Medio juego 17->18, Final(es) 18->19, Transición(es) 19->20, Tiempo 20->21, Espacio 21->22, Centro 22->23, Táctica 23->24, Estrategia 24->25, Cálculo 25->26, Valoración 26->27. El total pasa de 26 a 27 ejes, numeración contigua 1-27 sin huecos. Cualquier referencia externa que citara la numeración v1.2 (1-26) debe actualizarse a v1.3 (1-27).",
+    "El eje 14 (Defensa) cedió el término 'contraataque'/'counterattack'/'контратака'/'contra-ataque' al nuevo eje 16 (Contragolpe/Contrajuego), que lo trata con mayor profundidad y como su término canónico; Defensa conserva el resto de su campo semántico (resistencia, solidez, resiliencia) sin ese solapamiento directo."
+  ],
+  "categorias": [
+    {
+      "id": "a",
+      "nombre_es": "Las piezas",
+      "ejes": [
+        {
+          "eje": 1,
+          "emoji": "♔",
+          "nombre": {
+            "es": "Rey",
+            "en": "King",
+            "ru": "Король",
+            "pt_br": "Rei"
+          },
+          "palabras_clave": {
+            "es": [
+              "Rey",
+              "protección",
+              "seguridad",
+              "enroque",
+              "centralización en finales",
+              "refugio",
+              "exposición"
+            ],
+            "en": [
+              "King",
+              "protection",
+              "safety",
+              "castling",
+              "king safety",
+              "centralization in endgames",
+              "shelter",
+              "exposure"
+            ],
+            "ru": [
+              "Король",
+              "защита",
+              "безопасность короля",
+              "рокировка",
+              "централизация в эндшпиле",
+              "укрытие",
+              "открытая позиция короля"
+            ],
+            "pt_br": [
+              "Rei",
+              "proteção",
+              "segurança",
+              "roque",
+              "centralização nos finais",
+              "abrigo",
+              "exposição"
+            ]
+          }
+        },
+        {
+          "eje": 2,
+          "emoji": "♕",
+          "nombre": {
+            "es": "Dama",
+            "en": "Queen",
+            "ru": "Ферзь",
+            "pt_br": "Dama"
+          },
+          "palabras_clave": {
+            "es": [
+              "Dama",
+              "poder",
+              "versatilidad",
+              "centralización",
+              "gestión de riesgos",
+              "actividad"
+            ],
+            "en": [
+              "Queen",
+              "power",
+              "versatility",
+              "centralization",
+              "risk management",
+              "activity"
+            ],
+            "ru": [
+              "Ферзь",
+              "сила",
+              "универсальность",
+              "централизация",
+              "управление рисками",
+              "активность"
+            ],
+            "pt_br": [
+              "Dama",
+              "poder",
+              "versatilidade",
+              "centralização",
+              "gestão de riscos",
+              "atividade"
+            ]
+          }
+        },
+        {
+          "eje": 3,
+          "emoji": "♖",
+          "nombre": {
+            "es": "Torre",
+            "en": "Rook",
+            "ru": "Ладья",
+            "pt_br": "Torre"
+          },
+          "palabras_clave": {
+            "es": [
+              "Torre",
+              "columnas abiertas",
+              "actividad",
+              "finales de torres",
+              "séptima fila",
+              "duplicación de torres",
+              "torres unidas"
+            ],
+            "en": [
+              "Rook",
+              "open files",
+              "activity",
+              "rook endgames",
+              "seventh rank",
+              "doubling rooks",
+              "connected rooks"
+            ],
+            "ru": [
+              "Ладья",
+              "открытые вертикали",
+              "активность",
+              "ладейные эндшпили",
+              "седьмая горизонталь",
+              "сдвоение ладей",
+              "соединённые ладьи"
+            ],
+            "pt_br": [
+              "Torre",
+              "colunas abertas",
+              "atividade",
+              "finais de torres",
+              "sétima fileira",
+              "dobramento de torres",
+              "torres unidas"
+            ]
+          }
+        },
+        {
+          "eje": 4,
+          "emoji": "♗",
+          "nombre": {
+            "es": "Alfil",
+            "en": "Bishop",
+            "ru": "Слон",
+            "pt_br": "Bispo"
+          },
+          "palabras_clave": {
+            "es": [
+              "Alfil",
+              "diagonales",
+              "actividad",
+              "pareja de alfiles",
+              "colores (alfil bueno/malo)",
+              "fianchetto"
+            ],
+            "en": [
+              "Bishop",
+              "diagonals",
+              "activity",
+              "bishop pair",
+              "good/bad bishop",
+              "fianchetto"
+            ],
+            "ru": [
+              "Слон",
+              "диагонали",
+              "активность",
+              "пара слонов",
+              "хороший/плохой слон",
+              "фианкетто"
+            ],
+            "pt_br": [
+              "Bispo",
+              "diagonais",
+              "atividade",
+              "par de bispos",
+              "bispo bom/ruim",
+              "fianchetto"
+            ]
+          }
+        },
+        {
+          "eje": 5,
+          "emoji": "♘",
+          "nombre": {
+            "es": "Caballo",
+            "en": "Knight",
+            "ru": "Конь",
+            "pt_br": "Cavalo"
+          },
+          "palabras_clave": {
+            "es": [
+              "Caballo",
+              "salto",
+              "centralización",
+              "puesto avanzado (outpost)",
+              "maniobrabilidad",
+              "horquilla"
+            ],
+            "en": [
+              "Knight",
+              "jump/leap",
+              "centralization",
+              "outpost",
+              "maneuverability",
+              "fork"
+            ],
+            "ru": [
+              "Конь",
+              "прыжок",
+              "централизация",
+              "форпост",
+              "манёвренность",
+              "вилка"
+            ],
+            "pt_br": [
+              "Cavalo",
+              "salto",
+              "centralização",
+              "posto avançado",
+              "manobrabilidade",
+              "garfo"
+            ]
+          }
+        },
+        {
+          "eje": 6,
+          "emoji": "♙",
+          "nombre": {
+            "es": "Peón",
+            "en": "Pawn",
+            "ru": "Пешка",
+            "pt_br": "Peão"
+          },
+          "palabras_clave": {
+            "es": [
+              "Peón",
+              "estructura",
+              "mayoría",
+              "peón pasado",
+              "debilidades",
+              "avance",
+              "peones colgantes",
+              "peón débil",
+              "peones doblados",
+              "peón retrasado",
+              "cadena de peones",
+              "isla de peones"
+            ],
+            "en": [
+              "Pawn",
+              "structure",
+              "majority",
+              "passed pawn",
+              "weaknesses",
+              "advance",
+              "hanging pawns",
+              "weak pawn",
+              "doubled pawns",
+              "backward pawn",
+              "pawn chain",
+              "pawn island"
+            ],
+            "ru": [
+              "Пешка",
+              "структура",
+              "большинство",
+              "проходная пешка",
+              "слабости",
+              "продвижение",
+              "висячие пешки",
+              "слабая пешка",
+              "сдвоенные пешки",
+              "отсталая пешка",
+              "пешечная цепь",
+              "пешечный остров"
+            ],
+            "pt_br": [
+              "Peão",
+              "estrutura",
+              "maioria",
+              "peão passado",
+              "fraquezas",
+              "avanço",
+              "peões pendurados",
+              "peão fraco",
+              "peões dobrados",
+              "peão atrasado",
+              "cadeia de peões",
+              "ilha de peões"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "b",
+      "nombre_es": "Ofensiva (fortalezas y oportunidades)",
+      "ejes": [
+        {
+          "eje": 7,
+          "emoji": "📈",
+          "nombre": {
+            "es": "Ventaja",
+            "en": "Advantage",
+            "ru": "Преимущество",
+            "pt_br": "Vantagem"
+          },
+          "palabras_clave": {
+            "es": [
+              "Ventaja",
+              "superioridad",
+              "ventaja material",
+              "ventaja posicional"
+            ],
+            "en": [
+              "Advantage",
+              "superiority",
+              "material advantage",
+              "positional advantage"
+            ],
+            "ru": [
+              "Преимущество",
+              "превосходство",
+              "материальное преимущество",
+              "позиционное преимущество"
+            ],
+            "pt_br": [
+              "Vantagem",
+              "superioridade",
+              "vantagem material",
+              "vantagem posicional"
+            ]
+          }
+        },
+        {
+          "eje": 8,
+          "emoji": "⚡",
+          "nombre": {
+            "es": "Iniciativa",
+            "en": "Initiative",
+            "ru": "Инициатива",
+            "pt_br": "Iniciativa"
+          },
+          "palabras_clave": {
+            "es": [
+              "Iniciativa",
+              "ventaja de tiempo",
+              "ritmo",
+              "proactividad",
+              "liderazgo",
+              "presión"
+            ],
+            "en": [
+              "Initiative",
+              "tempo advantage",
+              "momentum",
+              "proactivity",
+              "leadership",
+              "pressure"
+            ],
+            "ru": [
+              "Инициатива",
+              "преимущество темпа",
+              "темп",
+              "инициативность",
+              "давление"
+            ],
+            "pt_br": [
+              "Iniciativa",
+              "vantagem de tempo",
+              "ritmo",
+              "proatividade",
+              "liderança",
+              "pressão"
+            ]
+          }
+        },
+        {
+          "eje": 9,
+          "emoji": "⚔️",
+          "nombre": {
+            "es": "Ataque",
+            "en": "Attack",
+            "ru": "Атака",
+            "pt_br": "Ataque"
+          },
+          "palabras_clave": {
+            "es": [
+              "Ataque",
+              "agresión",
+              "presión",
+              "iniciativa ofensiva",
+              "fuerzas concentradas",
+              "ataque al rey",
+              "amenaza de mate"
+            ],
+            "en": [
+              "Attack",
+              "aggression",
+              "pressure",
+              "offensive initiative",
+              "concentrated forces",
+              "king attack",
+              "mating threat"
+            ],
+            "ru": [
+              "Атака",
+              "агрессия",
+              "давление",
+              "наступательная инициатива",
+              "сосредоточение сил",
+              "атака на короля",
+              "угроза мата"
+            ],
+            "pt_br": [
+              "Ataque",
+              "agressão",
+              "pressão",
+              "iniciativa ofensiva",
+              "forças concentradas",
+              "ataque ao rei",
+              "ameaça de mate"
+            ]
+          }
+        },
+        {
+          "eje": 10,
+          "emoji": "🤝",
+          "nombre": {
+            "es": "Coordinación",
+            "en": "Coordination",
+            "ru": "Координация",
+            "pt_br": "Coordenação"
+          },
+          "palabras_clave": {
+            "es": [
+              "Coordinación",
+              "armonía",
+              "comunicación",
+              "sinergia",
+              "cooperación",
+              "intercambio",
+              "trabajo conjunto"
+            ],
+            "en": [
+              "Coordination",
+              "harmony",
+              "communication",
+              "synergy",
+              "cooperation",
+              "exchange",
+              "teamwork"
+            ],
+            "ru": [
+              "Координация",
+              "гармония",
+              "взаимодействие",
+              "синергия",
+              "сотрудничество",
+              "размен",
+              "слаженность"
+            ],
+            "pt_br": [
+              "Coordenação",
+              "harmonia",
+              "comunicação",
+              "sinergia",
+              "cooperação",
+              "troca",
+              "trabalho conjunto"
+            ]
+          }
+        },
+        {
+          "eje": 11,
+          "emoji": "🔥",
+          "nombre": {
+            "es": "Sacrificio",
+            "en": "Sacrifice",
+            "ru": "Жертва",
+            "pt_br": "Sacrifício"
+          },
+          "palabras_clave": {
+            "es": [
+              "Sacrificio",
+              "entrega de material",
+              "especulación",
+              "compensación"
+            ],
+            "en": [
+              "Sacrifice",
+              "material offer",
+              "speculation",
+              "compensation"
+            ],
+            "ru": [
+              "Жертва",
+              "отдача материала",
+              "спекулятивная жертва",
+              "компенсация"
+            ],
+            "pt_br": [
+              "Sacrifício",
+              "entrega de material",
+              "especulação",
+              "compensação"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "c",
+      "nombre_es": "Defensiva (debilidades y amenazas)",
+      "ejes": [
+        {
+          "eje": 12,
+          "emoji": "🩹",
+          "nombre": {
+            "es": "Debilidad",
+            "en": "Weakness",
+            "ru": "Слабость",
+            "pt_br": "Fraqueza"
+          },
+          "palabras_clave": {
+            "es": [
+              "Debilidad",
+              "aislamiento",
+              "agujeros",
+              "casillas débiles",
+              "estructuras débiles",
+              "explotación",
+              "calidad de menos"
+            ],
+            "en": [
+              "Weakness",
+              "isolation",
+              "holes",
+              "weak squares",
+              "weak structures",
+              "exploitation",
+              "exchange deficit (quality down)"
+            ],
+            "ru": [
+              "Слабость",
+              "изоляция",
+              "дыры",
+              "слабые поля",
+              "слабые структуры",
+              "использование слабостей",
+              "недостача качества"
+            ],
+            "pt_br": [
+              "Fraqueza",
+              "isolamento",
+              "buracos",
+              "casas fracas",
+              "estruturas fracas",
+              "exploração",
+              "qualidade a menos"
+            ]
+          }
+        },
+        {
+          "eje": 13,
+          "emoji": "🧱",
+          "nombre": {
+            "es": "Profilaxis",
+            "en": "Prophylaxis",
+            "ru": "Профилактика",
+            "pt_br": "Profilaxia"
+          },
+          "palabras_clave": {
+            "es": [
+              "Profilaxis",
+              "prevención",
+              "seguridad",
+              "precaución",
+              "evaluación",
+              "anticipación",
+              "bloqueo",
+              "restricción",
+              "inmovilización",
+              "contención",
+              "obstáculo",
+              "control preventivo"
+            ],
+            "en": [
+              "Prophylaxis",
+              "prevention",
+              "safety",
+              "caution",
+              "evaluation",
+              "anticipation",
+              "blockade",
+              "restriction",
+              "immobilization",
+              "containment",
+              "obstacle",
+              "preventive control"
+            ],
+            "ru": [
+              "Профилактика",
+              "предупреждение",
+              "безопасность",
+              "осторожность",
+              "оценка",
+              "предвидение",
+              "блокада",
+              "ограничение",
+              "обездвиживание",
+              "сдерживание",
+              "препятствие",
+              "превентивный контроль"
+            ],
+            "pt_br": [
+              "Profilaxia",
+              "prevenção",
+              "segurança",
+              "cautela",
+              "avaliação",
+              "antecipação",
+              "bloqueio",
+              "restrição",
+              "imobilização",
+              "contenção",
+              "obstáculo",
+              "controle preventivo"
+            ]
+          }
+        },
+        {
+          "eje": 14,
+          "emoji": "🛡️",
+          "nombre": {
+            "es": "Defensa",
+            "en": "Defense",
+            "ru": "Защита",
+            "pt_br": "Defesa"
+          },
+          "palabras_clave": {
+            "es": [
+              "Defensa",
+              "resistencia",
+              "solidez",
+              "resiliencia"
+            ],
+            "en": [
+              "Defense",
+              "resistance",
+              "solidity",
+              "resilience"
+            ],
+            "ru": [
+              "Защита",
+              "сопротивление",
+              "прочность",
+              "устойчивость"
+            ],
+            "pt_br": [
+              "Defesa",
+              "resistência",
+              "solidez",
+              "resiliência"
+            ]
+          }
+        },
+        {
+          "eje": 15,
+          "emoji": "🤸",
+          "nombre": {
+            "es": "Flexibilidad",
+            "en": "Flexibility",
+            "ru": "Гибкость",
+            "pt_br": "Flexibilidade"
+          },
+          "palabras_clave": {
+            "es": [
+              "Flexibilidad",
+              "adaptabilidad",
+              "recursos",
+              "alternativas",
+              "versatilidad"
+            ],
+            "en": [
+              "Flexibility",
+              "adaptability",
+              "resources",
+              "alternatives",
+              "versatility"
+            ],
+            "ru": [
+              "Гибкость",
+              "адаптивность",
+              "ресурсы",
+              "альтернативы",
+              "универсальность"
+            ],
+            "pt_br": [
+              "Flexibilidade",
+              "adaptabilidade",
+              "recursos",
+              "alternativas",
+              "versatilidade"
+            ]
+          }
+        },
+        {
+          "eje": 16,
+          "emoji": "🥊",
+          "nombre": {
+            "es": "Contragolpe (Contrajuego)",
+            "en": "Counterattack (Counterplay)",
+            "ru": "Контратака (Контригра)",
+            "pt_br": "Contra-ataque (Contrajogo)"
+          },
+          "palabras_clave": {
+            "es": [
+              "Contragolpe",
+              "Contrajuego",
+              "contraataque",
+              "ruptura defensiva",
+              "recurso defensivo activo",
+              "jugada intermedia",
+              "golpe de vuelta",
+              "cambio de iniciativa",
+              "defensa activa",
+              "contrachance"
+            ],
+            "en": [
+              "Counterattack",
+              "Counterplay",
+              "counter-strike",
+              "defensive break",
+              "active defensive resource",
+              "in-between move",
+              "riposte",
+              "shift of initiative",
+              "active defense",
+              "counter-chances"
+            ],
+            "ru": [
+              "Контратака",
+              "Контригра",
+              "контрудар",
+              "оборонительный прорыв",
+              "активный защитный ресурс",
+              "промежуточный ход",
+              "ответный удар",
+              "перехват инициативы",
+              "активная защита",
+              "контршансы"
+            ],
+            "pt_br": [
+              "Contra-ataque",
+              "Contrajogo",
+              "golpe de resposta",
+              "ruptura defensiva",
+              "recurso defensivo ativo",
+              "lance intermediário",
+              "resposta",
+              "mudança de iniciativa",
+              "defesa ativa",
+              "contrachances"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "d",
+      "nombre_es": "Fases o etapas de la partida",
+      "ejes": [
+        {
+          "eje": 17,
+          "emoji": "🌱",
+          "nombre": {
+            "es": "Apertura",
+            "en": "Opening",
+            "ru": "Дебют",
+            "pt_br": "Abertura"
+          },
+          "palabras_clave": {
+            "es": [
+              "Apertura",
+              "desarrollo",
+              "tiempo",
+              "iniciativa",
+              "activación",
+              "armonía",
+              "movilización de piezas"
+            ],
+            "en": [
+              "Opening",
+              "development",
+              "tempo",
+              "initiative",
+              "activation",
+              "harmony",
+              "piece mobilization"
+            ],
+            "ru": [
+              "Дебют",
+              "развитие",
+              "темп",
+              "инициатива",
+              "активизация",
+              "гармония",
+              "мобилизация фигур"
+            ],
+            "pt_br": [
+              "Abertura",
+              "desenvolvimento",
+              "tempo",
+              "iniciativa",
+              "ativação",
+              "harmonia",
+              "mobilização de peças"
+            ]
+          }
+        },
+        {
+          "eje": 18,
+          "emoji": "⚙️",
+          "nombre": {
+            "es": "Medio juego",
+            "en": "Middlegame",
+            "ru": "Миттельшпиль",
+            "pt_br": "Meio-jogo"
+          },
+          "palabras_clave": {
+            "es": [
+              "Medio juego",
+              "planificación",
+              "complicaciones",
+              "transformación de ventajas"
+            ],
+            "en": [
+              "Middlegame",
+              "planning",
+              "complications",
+              "transformation of advantages"
+            ],
+            "ru": [
+              "Миттельшпиль",
+              "планирование",
+              "осложнения",
+              "трансформация преимуществ"
+            ],
+            "pt_br": [
+              "Meio-jogo",
+              "planejamento",
+              "complicações",
+              "transformação de vantagens"
+            ]
+          }
+        },
+        {
+          "eje": 19,
+          "emoji": "🏁",
+          "nombre": {
+            "es": "Final(es)",
+            "en": "Endgame",
+            "ru": "Эндшпиль",
+            "pt_br": "Final"
+          },
+          "palabras_clave": {
+            "es": [
+              "Final",
+              "simplificación",
+              "coronación",
+              "zugzwang",
+              "actividad del rey",
+              "oposición",
+              "finales de peones",
+              "finales de torres"
+            ],
+            "en": [
+              "Endgame",
+              "simplification",
+              "promotion",
+              "zugzwang",
+              "king activity",
+              "opposition",
+              "pawn endgames",
+              "rook endgames"
+            ],
+            "ru": [
+              "Эндшпиль",
+              "упрощение",
+              "превращение пешки",
+              "цугцванг",
+              "активность короля",
+              "оппозиция",
+              "пешечные эндшпили",
+              "ладейные эндшпили"
+            ],
+            "pt_br": [
+              "Final",
+              "simplificação",
+              "coroação (promoção)",
+              "zugzwang",
+              "atividade do rei",
+              "oposição",
+              "finais de peões",
+              "finais de torres"
+            ]
+          }
+        },
+        {
+          "eje": 20,
+          "emoji": "♻️",
+          "nombre": {
+            "es": "Transición(es)",
+            "en": "Transition",
+            "ru": "Переход",
+            "pt_br": "Transição"
+          },
+          "palabras_clave": {
+            "es": [
+              "Transición",
+              "contexto",
+              "excepción",
+              "relativismo",
+              "juicio crítico",
+              "madurez",
+              "cambio de fase"
+            ],
+            "en": [
+              "Transition",
+              "context",
+              "exception",
+              "relativism",
+              "critical judgment",
+              "maturity",
+              "phase change"
+            ],
+            "ru": [
+              "Переход",
+              "контекст",
+              "исключение",
+              "относительность",
+              "критическое суждение",
+              "зрелость",
+              "смена фазы"
+            ],
+            "pt_br": [
+              "Transição",
+              "contexto",
+              "exceção",
+              "relativismo",
+              "julgamento crítico",
+              "maturidade",
+              "mudança de fase"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "e",
+      "nombre_es": "Principios / factores subyacentes",
+      "ejes": [
+        {
+          "eje": 21,
+          "emoji": "⏳",
+          "nombre": {
+            "es": "Tiempo",
+            "en": "Time",
+            "ru": "Время",
+            "pt_br": "Tempo"
+          },
+          "palabras_clave": {
+            "es": [
+              "Tiempo",
+              "tempo",
+              "ritmo",
+              "eficiencia",
+              "rapidez",
+              "urgencia"
+            ],
+            "en": [
+              "Time",
+              "tempo",
+              "pace",
+              "efficiency",
+              "speed",
+              "urgency"
+            ],
+            "ru": [
+              "Время",
+              "темп",
+              "ритм",
+              "эффективность",
+              "скорость",
+              "срочность"
+            ],
+            "pt_br": [
+              "Tempo",
+              "tempo (xadrez)",
+              "ritmo",
+              "eficiência",
+              "rapidez",
+              "urgência"
+            ]
+          }
+        },
+        {
+          "eje": 22,
+          "emoji": "🌎",
+          "nombre": {
+            "es": "Espacio",
+            "en": "Space",
+            "ru": "Пространство",
+            "pt_br": "Espaço"
+          },
+          "palabras_clave": {
+            "es": [
+              "Espacio",
+              "territorio",
+              "movilidad",
+              "restricción",
+              "expansión",
+              "posición",
+              "control de casillas"
+            ],
+            "en": [
+              "Space",
+              "territory",
+              "mobility",
+              "restriction",
+              "expansion",
+              "position",
+              "square control"
+            ],
+            "ru": [
+              "Пространство",
+              "территория",
+              "подвижность",
+              "ограничение",
+              "экспансия",
+              "позиция",
+              "контроль полей"
+            ],
+            "pt_br": [
+              "Espaço",
+              "território",
+              "mobilidade",
+              "restrição",
+              "expansão",
+              "posição",
+              "controle de casas"
+            ]
+          }
+        },
+        {
+          "eje": 23,
+          "emoji": "🎯",
+          "nombre": {
+            "es": "Centro",
+            "en": "Center",
+            "ru": "Центр",
+            "pt_br": "Centro"
+          },
+          "palabras_clave": {
+            "es": [
+              "Centro",
+              "control",
+              "influencia",
+              "base operativa",
+              "centro móvil",
+              "centro fijo"
+            ],
+            "en": [
+              "Center",
+              "control",
+              "influence",
+              "operational base",
+              "mobile center",
+              "fixed center"
+            ],
+            "ru": [
+              "Центр",
+              "контроль",
+              "влияние",
+              "оперативная база",
+              "подвижный центр",
+              "фиксированный центр"
+            ],
+            "pt_br": [
+              "Centro",
+              "controle",
+              "influência",
+              "base operacional",
+              "centro móvel",
+              "centro fixo"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "f",
+      "nombre_es": "Recursos, planes, sistemas y sensibilidad ajedrecística",
+      "ejes": [
+        {
+          "eje": 24,
+          "emoji": "🧩",
+          "nombre": {
+            "es": "Táctica",
+            "en": "Tactics",
+            "ru": "Тактика",
+            "pt_br": "Tática"
+          },
+          "palabras_clave": {
+            "es": [
+              "Táctica",
+              "golpes",
+              "sorpresas",
+              "combinaciones",
+              "cálculo",
+              "motivos tácticos",
+              "clavada",
+              "jaque descubierto"
+            ],
+            "en": [
+              "Tactics",
+              "tactical shots",
+              "surprises",
+              "combinations",
+              "calculation",
+              "tactical motifs",
+              "pin",
+              "discovered attack"
+            ],
+            "ru": [
+              "Тактика",
+              "тактические удары",
+              "сюрпризы",
+              "комбинации",
+              "расчёт",
+              "тактические мотивы",
+              "связка",
+              "вскрытое нападение"
+            ],
+            "pt_br": [
+              "Tática",
+              "golpes táticos",
+              "surpresas",
+              "combinações",
+              "cálculo",
+              "motivos táticos",
+              "cravada",
+              "ataque descoberto"
+            ]
+          }
+        },
+        {
+          "eje": 25,
+          "emoji": "🗺️",
+          "nombre": {
+            "es": "Estrategia",
+            "en": "Strategy",
+            "ru": "Стратегия",
+            "pt_br": "Estratégia"
+          },
+          "palabras_clave": {
+            "es": [
+              "Estrategia",
+              "planificación",
+              "conceptos",
+              "fundamentos",
+              "visión",
+              "plan a largo plazo"
+            ],
+            "en": [
+              "Strategy",
+              "planning",
+              "concepts",
+              "fundamentals",
+              "vision",
+              "long-term plan"
+            ],
+            "ru": [
+              "Стратегия",
+              "планирование",
+              "концепции",
+              "основы",
+              "видение",
+              "долгосрочный план"
+            ],
+            "pt_br": [
+              "Estratégia",
+              "planejamento",
+              "conceitos",
+              "fundamentos",
+              "visão",
+              "plano de longo prazo"
+            ]
+          }
+        },
+        {
+          "eje": 26,
+          "emoji": "🧠",
+          "nombre": {
+            "es": "Cálculo",
+            "en": "Calculation",
+            "ru": "Расчёт",
+            "pt_br": "Cálculo"
+          },
+          "palabras_clave": {
+            "es": [
+              "Cálculo",
+              "análisis",
+              "anticipación",
+              "hipótesis",
+              "evaluación",
+              "árbol de variantes"
+            ],
+            "en": [
+              "Calculation",
+              "analysis",
+              "anticipation",
+              "hypothesis",
+              "evaluation",
+              "variation tree"
+            ],
+            "ru": [
+              "Расчёт",
+              "анализ",
+              "предвидение",
+              "гипотеза",
+              "оценка",
+              "дерево вариантов"
+            ],
+            "pt_br": [
+              "Cálculo",
+              "análise",
+              "antecipação",
+              "hipótese",
+              "avaliação",
+              "árvore de variantes"
+            ]
+          }
+        },
+        {
+          "eje": 27,
+          "emoji": "⚖️",
+          "nombre": {
+            "es": "Valoración",
+            "en": "Evaluation",
+            "ru": "Оценка",
+            "pt_br": "Avaliação"
+          },
+          "palabras_clave": {
+            "es": [
+              "Valoración",
+              "dinámica",
+              "estática",
+              "intercambio",
+              "ventaja material",
+              "simplificación",
+              "calidad",
+              "posición (evaluación, balance)"
+            ],
+            "en": [
+              "Evaluation",
+              "Assessment",
+              "dynamic",
+              "static",
+              "exchange",
+              "material advantage",
+              "simplification",
+              "quality",
+              "position (evaluation, balance)"
+            ],
+            "ru": [
+              "Оценка",
+              "динамика",
+              "статика",
+              "размен",
+              "материальное преимущество",
+              "упрощение",
+              "качество",
+              "позиция (оценка, баланс)"
+            ],
+            "pt_br": [
+              "Avaliação",
+              "dinâmica",
+              "estática",
+              "troca",
+              "vantagem material",
+              "simplificação",
+              "qualidade",
+              "posição (avaliação, equilíbrio)"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "guia_etiquetado": {
+    "formato": "[EJE_N: nombre_es | nombre_en | nombre_ru | nombre_pt_br]",
+    "ejemplo": "[EJE_13: Profilaxis | Prophylaxis | Профилактика | Profilaxia]",
+    "reglas": [
+      "Un comentario puede activar varios ejes a la vez.",
+      "La coincidencia es por substring sobre texto normalizado (minusculas, sin acentos), no por token exacto; ver 'normalizacion_y_matching'.",
+      "La agregacion de etiquetas es por PARTIDA completa (todos sus comentarios juntos), no por comentario aislado; ver 'nivel_agregacion'.",
+      "La relevancia/orden de las etiquetas se decide con el sistema de pesos objetivo de 'algoritmo_etiquetado' (ya no es un criterio subjetivo de 'termino mas literal').",
+      "Objetivo orientativo: x>2 (3 o mas) etiquetas por partida cuando la partida tiene contenido tematico suficiente; nunca forzar el conteo. Maximo 7.",
+      "Terminos fusionados (no son ejes independientes): Intercambio y Posicion-evaluacion -> eje 27; Seguridad y Bloqueo -> eje 13; Desarrollo -> eje 17; Contexto -> eje 20."
+    ],
+    "normalizacion_y_matching": {
+      "descripcion": "El matching NO es por tokenizacion exacta de palabras sueltas: es por SUBSTRING sobre el texto normalizado. Esto es necesario porque español y ruso son idiomas muy flexivos (atacar/atacando/ataque/atacada; атака/атакуют/атаковал) y una coincidencia exacta de token perderia la mayoria de las variantes.",
+      "pasos_normalizacion": [
+        "1. Convertir el comentario del PGN y cada palabra_clave a minusculas.",
+        "2. Quitar acentos/diacriticos latinos (á->a, é->e, í->i, ó->o, ú->u, ñ->n; NFD + strip combining marks). El ruso no usa acentos, se deja igual salvo minusculas (ё puede normalizarse a е opcionalmente).",
+        "3. Colapsar espacios multiples y quitar signos de puntuacion adyacentes ({ } [ ] ! ? , ; : ( ) ) que puedan pegarse a la palabra.",
+        "4. NO se traduce ni se detecta idioma del comentario: se buscan las palabras_clave de los 4 idiomas (es/en/ru/pt_br) simultaneamente sobre el mismo texto normalizado, porque un PGN puede mezclar idiomas entre comentarios o incluso dentro de uno."
+      ],
+      "regla_substring": [
+        "Si la palabra_clave tiene 5 caracteres o mas (o es una frase de 2+ palabras): usar coincidencia por SUBSTRING simple (texto.includes(clave_normalizada)). Cubre variantes por sufijos/flexion sin listar cada forma.",
+        "Si la palabra_clave tiene 4 caracteres o menos (ej. 'Rey', 'Дама' corto, 'gol', 'Rei'): exigir coincidencia de PALABRA COMPLETA (limites de palabra \\b...\\b o equivalente) para evitar falsos positivos dentro de palabras mas largas no relacionadas.",
+        "Frases de varias palabras (ej. 'peon pasado', 'открытые вертикали') se buscan como substring de la frase completa normalizada; no requieren que las palabras esten contiguas en el mismo orden solo si el eje lo permite explicitamente (por defecto se busca la frase tal cual, contigua)."
+      ]
+    },
+    "nivel_agregacion": {
+      "descripcion": "La agregacion de etiquetas se hace a nivel de PARTIDA COMPLETA, no por comentario aislado. Se recorren TODOS los comentarios {} de una partida (todas las jugadas anotadas) y se acumulan las coincidencias de cada eje a lo largo de toda la partida antes de decidir las etiquetas finales.",
+      "objetivo_cantidad": "Objetivo esperado: x>2 etiquetas por partida (es decir, 3 o mas) cuando la partida tiene suficiente contenido tematico en sus comentarios. Esto es una meta orientativa, NO una cantidad forzada: si tras aplicar el algoritmo de scoring (ver 'algoritmo_etiquetado') menos de 3 ejes superan el umbral minimo de activacion, se etiqueta la partida solo con los que si califican (incluyendo 0 si la partida no tiene comentarios tematicos identificables). Nunca se rellenan etiquetas artificialmente solo para llegar a 3.",
+      "limite_superior": "Maximo 7 etiquetas por partida (top-7 por score), alineado con el rango 3-7 previsto para la esfera tematica."
+    },
+    "algoritmo_etiquetado": {
+      "descripcion": "Algoritmo determinista para decidir, de forma objetiva y reproducible, que ejes etiquetan una partida y en que orden de relevancia, sustituyendo la regla ambigua de 'priorizar el termino mas literal' por un sistema de pesos numericos.",
+      "peso_por_posicion_en_palabras_clave": {
+        "explicacion": "Dentro de cada lista palabras_clave[idioma], la posicion 0 es siempre el nombre canonico del eje (el termino mas literal) y las posiciones siguientes son sinonimos cada vez mas amplios. El peso de un match depende de esa posicion, no del idioma en que aparecio.",
+        "posicion_0_nombre_canonico": 3,
+        "posicion_1_sinonimo_directo": 2,
+        "posicion_2_en_adelante_sinonimo_amplio": 1
+      },
+      "pasos": [
+        "1. Normalizar el texto de todos los comentarios de la partida (ver normalizacion_y_matching).",
+        "2. Para cada eje (1-27) y cada idioma, buscar cada palabra_clave en el texto normalizado de la partida completa usando la regla_substring.",
+        "3. Cada palabra_clave que aparece al menos una vez en la partida suma su peso posicional (3, 2 o 1) UNA SOLA VEZ al score del eje, sin importar cuantas veces se repita esa misma palabra en distintos comentarios (evita que una palabra muy repetida infle artificialmente el score).",
+        "4. Sumar los pesos de todas las palabras_clave distintas que hicieron match (de cualquiera de los 4 idiomas) para obtener eje_score.",
+        "5. Umbral minimo de activacion: un eje solo se considera candidato si eje_score >= 2 (equivale a: o bien matcheo el nombre canonico una vez, o matchearon al menos dos sinonimos distintos).",
+        "6. Ordenar los ejes candidatos por eje_score descendente. Empate: gana el eje cuyo termino canonico (posicion 0) hizo match (vs uno que solo matcheo sinonimos); si persiste el empate, gana el eje de numero mas bajo (orden de aparicion en las categorias a-f).",
+        "7. Aplicar fusiones ya resueltas en notas_fusion (los terminos fusionados no generan un eje propio, sus matches ya estan precargados en las palabras_clave del eje destino: 27, 13, 17, 20).",
+        "8. Tomar los primeros 7 candidatos (limite_superior) como etiquetas finales de la partida, ordenados por relevancia (eje_score). Si hay menos de 7 candidatos, se usan todos los que superaron el umbral (ver objetivo_cantidad)."
+      ],
+      "ejemplo": "Comentario unico de una partida: 'Excelente sacrificio para abrir la columna del rey; ahora tiene iniciativa y ataque directo, aunque el peon retrasado en d6 sigue siendo una debilidad.' -> EJE 11 Sacrificio (nombre canonico 'sacrificio' matchea, peso 3) score=3; EJE 1 Rey (sinonimo 'rey' en 'columna del rey' no aplica porque 'columna' no es palabra_clave de Rey; aqui NO habria match de Rey salvo que el texto contenga alguna de sus palabras_clave literalmente); EJE 8 Iniciativa (nombre canonico matchea, peso 3) score=3; EJE 9 Ataque (nombre canonico matchea, peso 3) score=3; EJE 6 Peon (sinonimo 'peon retrasado' matchea, peso 1; 'debilidad' tambien matchea via su propia palabra_clave dentro de Peon si estuviera listada, o via EJE 12 Debilidad nombre canonico 'debilidad' peso 3) -> con un solo comentario ya se alcanzan 4 candidatos con score>=2, lo cual ilustra por que el objetivo de x>2 etiquetas por partida es realista en partidas bien anotadas."
+    }
+  },
+  "version": "1.3",
+  "fecha_actualizacion": "2026-08-11",
+  "convencion_csv_meta": "El archivo CSV incluye, ademas de las 27 filas de ejes (numeracion contigua 1-27, sin huecos desde v1.3), filas adicionales con categoria='_meta' que contienen las mismas reglas de normalizacion/agregacion/algoritmo descritas aqui, en texto plano dentro de la columna palabras_clave_es. Cualquier proceso que consuma el CSV para poblar la lista de 27 ejes debe filtrar/excluir las filas con categoria='_meta'."
+}
