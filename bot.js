@@ -224,7 +224,7 @@ bot.on('callback_query', async (query) => {
     const templatePath   = path.join(__dirname, templateFile);
     const generateScript = path.join(__dirname, scriptFile);
     const courseName     = originalName.replace(/\.pgn$/i, '');
-    const outputName     = originalName.replace(/\.pgn$/i, '.html');
+    const outputName     = originalName.replace(/\.pgn$/i, '').replace(/_/g, ' ') + '.html';
     const outPath        = path.join(TEMP_DIR, outputName);
 
     // Para sphere: también pasar ejes y template explícitamente
@@ -243,7 +243,7 @@ bot.on('callback_query', async (query) => {
     await bot.deleteMessage(chatId, messageId).catch(() => {});
 
     await bot.sendDocument(chatId, outPath, {
-      caption: `✅ ${outputName} · ${modeLabel}`
+      caption: `✅ ${modeLabel}`
     });
 
     sessions.delete(sessionId);
