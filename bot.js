@@ -10,6 +10,7 @@ const execAsync = promisify(exec);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const TOKEN = process.env.TOKEN;
+const TRADUCTOR_URL = process.env.TRADUCTOR_URL || '';  // URL del servicio traductor en Render
 
 const bot = new TelegramBot(TOKEN, {
   polling: {
@@ -39,7 +40,15 @@ http.createServer((req, res) => {
 });
 
 const sessions = new Map();
-console.log('🤖 Bot de Cursos de Ajedrez iniciado...');
+console.log('🤖 Bot de Cursos de Ajedrez iniciado correctamente');
+
+// ─── Idiomas soportados ───────────────────────────────────────────────────────
+
+const LANGS = {
+  en: 'Inglés 🇬🇧',
+  es: 'Español 🇪🇸',
+  ru: 'Русский 🇷🇺'
+};
 
 // ─── Textos ───────────────────────────────────────────────────────────────────
 
@@ -54,33 +63,27 @@ Usa /help para ver todas las funcionalidades.`;
 const HELP_TEXT = `ℹ️ *¿Cómo funciona el bot?*
 
 *1. Envía un archivo PGN*
-Adjunta cualquier archivo \`.pgn\` y el bot lo procesará automáticamente.
+Adjunta cualquier archivo \`.pgn\` y el bot lo procesará.
 
 *2. Elige el tipo de curso*
-Tendrás 4 opciones:
+Tendrás 5 opciones:
 
-⚡ *Versión Ligera*
-HTML de ~250kb. Ideal para compartir y uso en móvil.
-
-🌟 *Versión Completa*
-HTML de ~5.7mb. Incluye el tema de tablero CB Teca.
-
-⬇️ *Con descarga PGN*
-Versión ligera que incluye un botón para descargar el PGN original.
-
-🔮 *Constelación*
-Visor interactivo 3D con grafo de partidas, constelación estratégica temática y acceso a 101 Chess Tips. Requiere más tiempo de procesamiento.
-
-*3. Recibe tu HTML*
-El bot genera el archivo y te lo entrega listo para abrir en cualquier navegador, sin internet.
+⚡ *Versión Ligera* — HTML ~250kb, ideal para móvil.
+🌟 *Versión Completa* — HTML ~5.7mb, tema CB Teca.
+⬇️ *Con descarga PGN* — incluye botón para descargar el PGN.
+🔮 *Constelación* — Visor 3D interactivo con 101 Chess Tips.
+🌐 *Traducir PGN* — Traduce los comentarios del PGN a otro idioma.
 
 *Atajos en el HTML de Constelación:*
   K → Constelación estratégica
   ? → 101 Chess Tips
 
+*Idiomas disponibles para traducción:*
+  🇬🇧 Inglés · 🇪🇸 Español · 🇷🇺 Русский
+
 *Límites:*
 • Sesión activa por 10 minutos tras enviar el PGN
-• Archivos de hasta 20MB (límite de Telegram)`;
+• Archivos de hasta 20MB`;
 
 // ─── Comandos ─────────────────────────────────────────────────────────────────
 
@@ -130,11 +133,12 @@ bot.on('document', async (msg) => {
       message_id: statusMsg.message_id,
       reply_markup: {
         inline_keyboard: [
-          [{ text: "⚡ Versión Ligera",       callback_data: `light|${sessionId}` }],
-          [{ text: "🌟 Versión Completa",      callback_data: `heavy|${sessionId}` }],
-          [{ text: "⬇️ Con descarga PGN",     callback_data: `pgn|${sessionId}`   }],
-          [{ text: "🔮 Constelación",          callback_data: `sphere|${sessionId}`}],
-          [{ text: "❌ Cancelar",              callback_data: `cancel|${sessionId}`}]
+          [{ text: "⚡ Versión Ligera",    callback_data: `light|${sessionId}` }],
+          [{ text: "🌟 Versión Completa",  callback_data: `heavy|${sessionId}` }],
+          [{ text: "⬇️ Con descarga PGN", callback_data: `pgn|${sessionId}`   }],
+          [{ text: "🔮 Constelación",      callback_data: `sphere|${sessionId}`}],
+          [{ text: "🌐 Traducir PGN",      callback_data: `tr_start|${sessionId}`}],
+          [{ text: "❌ Cancelar",          callback_data: `cancel|${sessionId}`}]
         ]
       }
     });
@@ -148,38 +152,211 @@ bot.on('document', async (msg) => {
   }
 });
 
+// ─── Helpers de traducción ────────────────────────────────────────────────────
+
+async function fetchJSON(url, opts = {}) {
+  const { default: fetch } = await import('node-fetch');
+  return fetch(url, opts);
+}
+
+async function callTraductor(endpoint, body) {
+  const res = await fetchJSON(`${TRADUCTOR_URL}${endpoint}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+async function pollJob(jobId, chatId, messageId) {
+  const { default: fetch } = await import('node-fetch');
+  while (true) {
+    await new Promise(r => setTimeout(r, 4000));
+    const res = await fetch(`${TRADUCTOR_URL}/translate/status/${jobId}`);
+    const data = await res.json();
+
+    if (data.status === 'running' || data.status === 'queued') {
+      const pct   = data.pct || 0;
+      const done  = data.progress || 0;
+      const total = data.total || '?';
+      const eta   = data.eta_seconds > 0
+        ? ` · ETA ${Math.ceil(data.eta_seconds / 60)} min`
+        : '';
+      await bot.editMessageText(
+        `🌐 Traduciendo... ${pct}% (${done}/${total})${eta}`,
+        { chat_id: chatId, message_id: messageId }
+      ).catch(() => {});
+    } else if (data.status === 'done') {
+      return { ok: true, pgn: data.pgn };
+    } else {
+      return { ok: false, error: data.error || 'Error desconocido' };
+    }
+  }
+}
+
 // ─── Callbacks ────────────────────────────────────────────────────────────────
 
 bot.on('callback_query', async (query) => {
-  const [action, sessionId] = query.data.split('|');
+  const parts     = query.data.split('|');
+  const action    = parts[0];
+  const sessionId = parts[1];
+  const extra     = parts[2];           // usado para from_lang / to_lang
   const chatId    = query.message.chat.id;
   const messageId = query.message.message_id;
 
-  // ── Mostrar help desde /start ──
+  // ── Help ──────────────────────────────────────────────────────────────────
   if (action === 'show_help') {
     await bot.answerCallbackQuery(query.id);
     await bot.sendMessage(chatId, HELP_TEXT, { parse_mode: 'Markdown' });
     return;
   }
 
-  // ── Cancelar ──
+  // ── Cancelar ──────────────────────────────────────────────────────────────
   if (action === 'cancel') {
     await bot.answerCallbackQuery(query.id);
     sessions.delete(sessionId);
     await bot.deleteMessage(chatId, messageId).catch(() => {});
-    const cancelMsg = await bot.sendMessage(chatId, "❌ Cancelado");
-    setTimeout(() => bot.deleteMessage(chatId, cancelMsg.message_id).catch(() => {}), 3000);
+    const m = await bot.sendMessage(chatId, "❌ Cancelado");
+    setTimeout(() => bot.deleteMessage(chatId, m.message_id).catch(() => {}), 3000);
     return;
   }
 
-  // ── Generar curso ──
+  // ── Traducción: paso 1 — elegir idioma ORIGEN ─────────────────────────────
+  if (action === 'tr_start') {
+    await bot.answerCallbackQuery(query.id);
+    await bot.editMessageText("🌐 *Traducir PGN*\n\n¿En qué idioma están los comentarios?", {
+      chat_id: chatId,
+      message_id: messageId,
+      parse_mode: 'Markdown',
+      reply_markup: {
+        inline_keyboard: [
+          ...Object.entries(LANGS).map(([code, label]) => ([
+            { text: label, callback_data: `tr_from|${sessionId}|${code}` }
+          ])),
+          [{ text: "❌ Cancelar", callback_data: `cancel|${sessionId}` }]
+        ]
+      }
+    });
+    return;
+  }
+
+  // ── Traducción: paso 2 — elegir idioma DESTINO ────────────────────────────
+  if (action === 'tr_from') {
+    const fromLang = extra;
+    await bot.answerCallbackQuery(query.id);
+    await bot.editMessageText(
+      `🌐 *Traducir PGN*\n\nOrigen: *${LANGS[fromLang]}*\n\n¿A qué idioma deseas traducir?`,
+      {
+        chat_id: chatId,
+        message_id: messageId,
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            ...Object.entries(LANGS)
+              .filter(([code]) => code !== fromLang)
+              .map(([code, label]) => ([
+                { text: label, callback_data: `tr_do|${sessionId}|${fromLang}_${code}` }
+              ])),
+            [{ text: "❌ Cancelar", callback_data: `cancel|${sessionId}` }]
+          ]
+        }
+      }
+    );
+    return;
+  }
+
+  // ── Traducción: paso 3 — ejecutar ─────────────────────────────────────────
+  if (action === 'tr_do') {
+    const [fromLang, toLang] = extra.split('_');
+    await bot.answerCallbackQuery(query.id, { text: "Iniciando traducción..." });
+
+    const session = sessions.get(sessionId);
+    if (!session) {
+      return bot.editMessageText("❌ Sesión expirada. Vuelve a enviar el archivo .pgn", {
+        chat_id: chatId, message_id: messageId
+      }).catch(() => {});
+    }
+
+    if (!TRADUCTOR_URL) {
+      return bot.editMessageText("❌ Servicio de traducción no configurado.", {
+        chat_id: chatId, message_id: messageId
+      }).catch(() => {});
+    }
+
+    const { filePath: pgnPath, originalName } = session;
+
+    await bot.editMessageText("🌐 Analizando PGN...", {
+      chat_id: chatId, message_id: messageId
+    });
+
+    try {
+      const pgnText = await fs.readFile(pgnPath, 'utf8');
+
+      // Estimar tamaño
+      const est = await callTraductor('/estimate', { pgn: pgnText });
+      const games = est.games || 0;
+      const chars = est.comment_chars || 0;
+
+      await bot.editMessageText(
+        `🌐 *Traduciendo PGN*\n\n` +
+        `📊 ${games} partidas · ${chars.toLocaleString()} caracteres\n` +
+        `🔤 ${LANGS[fromLang]} → ${LANGS[toLang]}\n\n` +
+        `⏳ Iniciando...`,
+        { chat_id: chatId, message_id: messageId, parse_mode: 'Markdown' }
+      );
+
+      let pgn, result;
+
+      if (games <= 50) {
+        // Sincrónico para PGN pequeños
+        result = await callTraductor('/translate', {
+          pgn: pgnText, from_lang: fromLang, to_lang: toLang
+        });
+        pgn = result.pgn;
+      } else {
+        // Asíncrono para PGN grandes
+        const jobRes = await callTraductor('/translate/async', {
+          pgn: pgnText, from_lang: fromLang, to_lang: toLang
+        });
+        if (jobRes.error) throw new Error(jobRes.error);
+        const poll = await pollJob(jobRes.job_id, chatId, messageId);
+        if (!poll.ok) throw new Error(poll.error);
+        pgn = poll.pgn;
+      }
+
+      if (!pgn) throw new Error('La traducción devolvió un resultado vacío.');
+
+      // Guardar y enviar
+      const outName = originalName.replace(/\.pgn$/i, '').replace(/_/g, ' ')
+        + ` (${fromLang}→${toLang}).pgn`;
+      const outPath = path.join(TEMP_DIR, `${Date.now()}-out.pgn`);
+      await fs.writeFile(outPath, pgn, 'utf8');
+
+      await bot.deleteMessage(chatId, messageId).catch(() => {});
+      await bot.sendDocument(chatId, outPath, {
+        caption: `🌐 ${LANGS[fromLang]} → ${LANGS[toLang]}`
+      });
+
+      sessions.delete(sessionId);
+      await fs.unlink(pgnPath).catch(() => {});
+      await fs.unlink(outPath).catch(() => {});
+
+    } catch (err) {
+      console.error(err);
+      bot.editMessageText(`❌ Error en la traducción:\n${err.message?.slice(0, 300)}`, {
+        chat_id: chatId, message_id: messageId
+      }).catch(() => {});
+    }
+    return;
+  }
+
+  // ── Generar curso (opciones originales) ───────────────────────────────────
   await bot.answerCallbackQuery(query.id, { text: "Generando curso..." });
 
   const session = sessions.get(sessionId);
   if (!session) {
     return bot.editMessageText("❌ Sesión expirada. Vuelve a enviar el archivo .pgn", {
-      chat_id: chatId,
-      message_id: messageId
+      chat_id: chatId, message_id: messageId
     }).catch(() => {});
   }
 
@@ -192,21 +369,16 @@ bot.on('callback_query', async (query) => {
     sphere: 'Constelación 🔮'
   }[action] || action;
 
-  // La constelación tarda más — aviso especial
   const waitMsg = action === 'sphere'
     ? `🔮 Generando Constelación...\n_Esto puede tardar 1-2 minutos, por favor espera._`
     : `🔄 Generando versión ${modeLabel}...`;
 
   await bot.editMessageText(waitMsg, {
-    chat_id: chatId,
-    message_id: messageId,
-    parse_mode: 'Markdown'
+    chat_id: chatId, message_id: messageId, parse_mode: 'Markdown'
   });
 
   try {
-    // Seleccionar template y script según modo
     let templateFile, scriptFile;
-
     if (action === 'sphere') {
       templateFile = '101-chess-tips-v13.html';
       scriptFile   = 'generate-sphere-course.mjs';
@@ -227,7 +399,6 @@ bot.on('callback_query', async (query) => {
     const outputName     = originalName.replace(/\.pgn$/i, '').replace(/_/g, ' ') + '.html';
     const outPath        = path.join(TEMP_DIR, outputName);
 
-    // Para sphere: también pasar ejes y template explícitamente
     let command;
     if (action === 'sphere') {
       const ejesPath = path.join(__dirname, 'ejes_tematicos_ajedrez_4idiomas.json');
@@ -236,12 +407,10 @@ bot.on('callback_query', async (query) => {
       command = `node "${generateScript}" --pgn "${pgnPath}" --template "${templatePath}" --out "${outPath}" --name "${courseName}"`;
     }
 
-    // Timeout extendido para constelación (3 min) vs normal (90 seg)
     const timeout = action === 'sphere' ? 180000 : 90000;
     await execAsync(command, { cwd: __dirname, timeout });
 
     await bot.deleteMessage(chatId, messageId).catch(() => {});
-
     await bot.sendDocument(chatId, outPath, {
       caption: `✅ ${modeLabel}`
     });
@@ -253,11 +422,10 @@ bot.on('callback_query', async (query) => {
   } catch (err) {
     console.error(err);
     const errText = err.killed
-      ? '❌ Tiempo de espera agotado al generar el curso. El PGN puede ser demasiado grande.'
+      ? '❌ Tiempo de espera agotado. El PGN puede ser demasiado grande.'
       : `❌ Error al generar el curso:\n${err.message?.slice(0, 300)}`;
     bot.editMessageText(errText, {
-      chat_id: chatId,
-      message_id: messageId
+      chat_id: chatId, message_id: messageId
     }).catch(() => bot.sendMessage(chatId, errText));
   }
 });
